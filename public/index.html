@@ -1,0 +1,639 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Haru Cards 🌸</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --pink: #F4A7B9;
+            --blue: #A8D8EA;
+            --peach: #FFCBA4;
+            --yellow: #FAE100;
+            --text: #2A2000;
+        }
+
+        body {
+            background: #f8f0f5;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #F4A7B9, #A8D8EA);
+            padding: 16px 20px;
+            text-align: center;
+        }
+
+            .header h1 {
+                font-size: 28px;
+                font-weight: 800;
+                color: #fff;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            }
+
+            .header p {
+                font-size: 13px;
+                color: rgba(255,255,255,0.85);
+                margin-top: 4px;
+            }
+
+        /* STEPS */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 20px 0;
+        }
+
+        .step {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            background: #e0d0e8;
+            color: #888;
+            transition: all .3s;
+        }
+
+            .step.active {
+                background: var(--pink);
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(244,167,185,0.5);
+            }
+
+            .step.done {
+                background: var(--blue);
+                color: #fff;
+            }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: #e0d0e8;
+            margin: auto;
+            border-radius: 2px;
+            max-width: 40px;
+        }
+
+        /* SCREENS */
+        .screen {
+            display: none;
+            padding: 20px;
+            animation: fadeIn .3s ease;
+        }
+
+            .screen.active {
+                display: block;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* SECTION TITLE */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #5A3060;
+            margin-bottom: 14px;
+        }
+
+        /* OCCASION GRID */
+        .occasion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .occasion-card {
+            padding: 16px 12px;
+            border-radius: 16px;
+            border: 2.5px solid transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+            .occasion-card:hover {
+                transform: translateY(-2px);
+            }
+
+            .occasion-card.selected {
+                border-color: var(--pink);
+                background: #FFF0F5;
+                box-shadow: 0 4px 12px rgba(244,167,185,0.3);
+            }
+
+        .occasion-icon {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .occasion-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #5A3060;
+        }
+
+        /* TEMPLATE GRID */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .template-card {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2.5px solid transparent;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+            .template-card:hover {
+                transform: translateY(-2px);
+            }
+
+            .template-card.selected {
+                border-color: var(--pink);
+                box-shadow: 0 4px 16px rgba(244,167,185,0.4);
+            }
+
+        .template-preview {
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .template-label {
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #5A3060;
+            background: #fff;
+        }
+
+        /* FORM */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #5A3060;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1.5px solid #E8D0F0;
+            font-size: 14px;
+            color: #2A2000;
+            outline: none;
+            transition: border-color .2s;
+            background: #fff;
+        }
+
+            .form-input:focus {
+                border-color: var(--pink);
+            }
+
+        .form-textarea {
+            resize: none;
+            height: 100px;
+            font-family: inherit;
+        }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink), #C080D0);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(244,167,185,0.4);
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(244,167,185,0.5);
+            }
+
+        .btn-secondary {
+            background: #F0E8F8;
+            color: #5A3060;
+        }
+
+        /* PREVIEW CARD */
+        .card-preview {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
+        }
+
+        .card-top {
+            padding: 30px 24px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card-emoji {
+            font-size: 56px;
+        }
+
+        .card-to {
+            font-size: 14px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .card-message {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.85;
+        }
+
+        .card-bottom {
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-from {
+            font-size: 13px;
+            color: #5A3060;
+            font-weight: 500;
+        }
+
+        .card-date {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* SHARE */
+        .share-section {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .share-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .share-text {
+            font-size: 14px;
+            color: #5A3060;
+            line-height: 1.6;
+        }
+
+        /* PREMIUM BANNER */
+        .premium-banner {
+            background: linear-gradient(135deg, #FAE100, #FFB800);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .premium-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .premium-text h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #5A3000;
+        }
+
+        .premium-text p {
+            font-size: 12px;
+            color: #7A5000;
+            margin-top: 2px;
+        }
+
+        .premium-btn {
+            background: #fff;
+            color: #7A5000;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* DECORATIONS */
+        .deco {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.15;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌸 Haru Cards</h1>
+        <p>Красивые открытки для друзей</p>
+    </div>
+
+    <div class="steps">
+        <div class="step active" id="s1">1</div>
+        <div class="step-line"></div>
+        <div class="step" id="s2">2</div>
+        <div class="step-line"></div>
+        <div class="step" id="s3">3</div>
+        <div class="step-line"></div>
+        <div class="step" id="s4">4</div>
+    </div>
+
+    <!-- STEP 1: OCCASION -->
+    <div class="screen active" id="screen1">
+        <br>
+        <div class="section-title">🎉 Выбери повод</div>
+        <div class="occasion-grid">
+            <div class="occasion-card selected" onclick="selectOccasion(this,'🎂','День рождения')" data-emoji="🎂" data-name="День рождения">
+                <div class="occasion-icon">🎂</div>
+                <div class="occasion-name">День рождения</div>
+            </div>
+            <div class="occasion-card" onclick="selectOccasion(this,'🎄','Новый год')" data-emoji="🎄" data-name="Новый год">
+                <div class="occasion-icon">🎄</div>
+                <div class="occasion-name">Новый год</div>
+            </div>
+            <div class="occasion-card" onclick="selectOccasion(this,'💕','Валентинка')" data-emoji="💕" data-name="Валентинка">
+                <div class="occasion-icon">💕</div>
+                <div class="occasion-name">Валентинка</div>
+            </div>
+            <div class="occasion-card" onclick="selectOccasion(this,'🌸','Просто так')" data-emoji="🌸" data-name="Просто так">
+                <div class="occasion-icon">🌸</div>
+                <div class="occasion-name">Просто так</div>
+            </div>
+            <div class="occasion-card" onclick="selectOccasion(this,'🎓','Выпускной')" data-emoji="🎓" data-name="Выпускной">
+                <div class="occasion-icon">🎓</div>
+                <div class="occasion-name">Выпускной</div>
+            </div>
+            <div class="occasion-card" onclick="selectOccasion(this,'💐','8 Марта')" data-emoji="💐" data-name="8 Марта">
+                <div class="occasion-icon">💐</div>
+                <div class="occasion-name">8 Марта</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="goStep(2)">Дальше →</button>
+    </div>
+
+    <!-- STEP 2: TEMPLATE -->
+    <div class="screen" id="screen2">
+        <br>
+        <div class="section-title">🎨 Выбери стиль</div>
+
+        <div class="premium-banner">
+            <div class="premium-icon">⭐</div>
+            <div class="premium-text">
+                <h3>Премиум шаблоны</h3>
+                <p>Анимации, музыка, эксклюзивные дизайны</p>
+            </div>
+            <button class="premium-btn">49 ₽</button>
+        </div>
+
+        <div class="template-grid">
+            <div class="template-card selected" onclick="selectTemplate(this,'t1')">
+                <div class="template-preview" style="background:linear-gradient(135deg,#F4A7B9,#C080D0)">
+                    <span style="font-size:28px">🌸</span>
+                    <span style="font-size:12px;color:#fff;font-weight:600">Нежный</span>
+                </div>
+                <div class="template-label">Нежный розовый</div>
+            </div>
+            <div class="template-card" onclick="selectTemplate(this,'t2')">
+                <div class="template-preview" style="background:linear-gradient(135deg,#A8D8EA,#7AB8D0)">
+                    <span style="font-size:28px">✨</span>
+                    <span style="font-size:12px;color:#fff;font-weight:600">Мечтательный</span>
+                </div>
+                <div class="template-label">Голубая мечта</div>
+            </div>
+            <div class="template-card" onclick="selectTemplate(this,'t3')">
+                <div class="template-preview" style="background:linear-gradient(135deg,#FAE100,#FFB800)">
+                    <span style="font-size:28px">🌟</span>
+                    <span style="font-size:12px;color:#7A5000;font-weight:600">Солнечный</span>
+                </div>
+                <div class="template-label">Солнечный</div>
+            </div>
+            <div class="template-card" onclick="selectTemplate(this,'t4')">
+                <div class="template-preview" style="background:linear-gradient(135deg,#B8E8C0,#80C890)">
+                    <span style="font-size:28px">🍃</span>
+                    <span style="font-size:12px;color:#fff;font-weight:600">Свежий</span>
+                </div>
+                <div class="template-label">Весенний</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="goStep(3)">Дальше →</button>
+        <button class="btn btn-secondary" onclick="goStep(1)">← Назад</button>
+    </div>
+
+    <!-- STEP 3: TEXT -->
+    <div class="screen" id="screen3">
+        <br>
+        <div class="section-title">✏️ Напиши текст</div>
+        <div class="form-group">
+            <label class="form-label">Кому? 👤</label>
+            <input class="form-input" id="inp-to" placeholder="Имя получателя..." maxlength="30">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Твоё сообщение 💌</label>
+            <textarea class="form-input form-textarea" id="inp-msg" placeholder="Напиши что-нибудь тёплое..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">От кого? 🌸</label>
+            <input class="form-input" id="inp-from" placeholder="Твоё имя..." maxlength="30">
+        </div>
+        <button class="btn btn-primary" onclick="goStep(4)">Посмотреть открытку →</button>
+        <button class="btn btn-secondary" onclick="goStep(2)">← Назад</button>
+    </div>
+
+    <!-- STEP 4: PREVIEW & SHARE -->
+    <div class="screen" id="screen4">
+        <br>
+        <div class="section-title">💌 Твоя открытка готова!</div>
+        <div class="card-preview" id="card-preview">
+            <div class="card-top" id="card-top">
+                <div class="card-emoji" id="card-emoji">🎂</div>
+                <div class="card-to" id="card-to">Для: —</div>
+                <div class="card-title" id="card-title">С Днём Рождения!</div>
+                <div class="card-message" id="card-msg">Твоё сообщение появится здесь</div>
+            </div>
+            <div class="card-bottom">
+                <div class="card-from" id="card-from">С любовью 🌸</div>
+                <div class="card-date" id="card-date"></div>
+            </div>
+        </div>
+
+        <div class="share-section">
+            <div class="share-icon">🚀</div>
+            <div class="share-text">Отправь открытку другу прямо в Telegram!</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="shareCard()" style="margin-top:12px">
+            📤 Отправить другу
+        </button>
+        <button class="btn btn-secondary" onclick="goStep(3)">← Изменить</button>
+        <button class="btn btn-secondary" onclick="newCard()" style="margin-top:4px">🌸 Создать новую</button>
+    </div>
+
+    <script>
+// Telegram Web App init
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+// State
+let state = {
+  occasionEmoji: '🎂',
+  occasionName: 'День рождения',
+  template: 't1',
+  to: '',
+  msg: '',
+  from: ''
+};
+
+const templates = {
+  t1: { bg: 'linear-gradient(135deg,#F4A7B9,#C080D0)', color: '#fff', title: 'С Днём Рождения! 🎂' },
+  t2: { bg: 'linear-gradient(135deg,#A8D8EA,#7AB8D0)', color: '#fff', title: 'Поздравляю! ✨' },
+  t3: { bg: 'linear-gradient(135deg,#FAE100,#FFB800)', color: '#5A3000', title: 'Ура! 🌟' },
+  t4: { bg: 'linear-gradient(135deg,#B8E8C0,#80C890)', color: '#fff', title: 'Привет! 🍃' }
+};
+
+const occasionTitles = {
+  '🎂': 'С Днём Рождения! 🎂',
+  '🎄': 'С Новым Годом! 🎄',
+  '💕': 'С Днём Влюблённых! 💕',
+  '🌸': 'Привет! 🌸',
+  '🎓': 'Поздравляю с выпускным! 🎓',
+  '💐': 'С 8 Марта! 💐'
+};
+
+function selectOccasion(el, emoji, name) {
+  document.querySelectorAll('.occasion-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.occasionEmoji = emoji;
+  state.occasionName = name;
+}
+
+function selectTemplate(el, id) {
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.template = id;
+}
+
+function goStep(n) {
+  if (n === 4) buildPreview();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + n).classList.add('active');
+  ['s1','s2','s3','s4'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i + 1 === n) el.classList.add('active');
+    else if (i + 1 < n) el.classList.add('done');
+  });
+  window.scrollTo(0, 0);
+}
+
+function buildPreview() {
+  state.to = document.getElementById('inp-to').value || 'другу';
+  state.msg = document.getElementById('inp-msg').value || 'Желаю тебе всего самого лучшего! 🌸';
+  state.from = document.getElementById('inp-from').value || 'Аноним';
+
+  const tmpl = templates[state.template];
+  const top = document.getElementById('card-top');
+  top.style.background = tmpl.bg;
+  top.style.color = tmpl.color;
+
+  document.getElementById('card-emoji').textContent = state.occasionEmoji;
+  document.getElementById('card-to').textContent = 'Для: ' + state.to;
+  document.getElementById('card-title').textContent = occasionTitles[state.occasionEmoji] || state.occasionName;
+  document.getElementById('card-msg').textContent = state.msg;
+  document.getElementById('card-from').textContent = 'От: ' + state.from + ' 🌸';
+  document.getElementById('card-date').textContent = new Date().toLocaleDateString('ru-RU');
+}
+
+function shareCard() {
+  const text = `🌸 *Haru Cards*\n\n${state.occasionEmoji} *${occasionTitles[state.occasionEmoji] || state.occasionName}*\n\n💌 Для: *${state.to}*\n\n${state.msg}\n\n— ${state.from}`;
+  if (tg) {
+    tg.switchInlineQuery(text);
+  } else {
+    const url = `https://t.me/share/url?url=t.me/harucards_bot/cards&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+}
+
+function newCard() {
+  state = { occasionEmoji: '🎂', occasionName: 'День рождения', template: 't1', to: '', msg: '', from: '' };
+  document.getElementById('inp-to').value = '';
+  document.getElementById('inp-msg').value = '';
+  document.getElementById('inp-from').value = '';
+  goStep(1);
+}
+
+// Set today's date
+document.getElementById('card-date').textContent = new Date().toLocaleDateString('ru-RU');
+    </script>
+</body>
+</html>
