@@ -1,0 +1,1314 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haru 하루</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --bg: #8B9EB8;
+            --header: #7A8FA8;
+            --bubble-mine: #FAE100;
+            --bubble-mine-text: #2A2000;
+            --bubble-theirs: #ffffff;
+            --bubble-theirs-text: #1a1a1a;
+            --nav-active: #FAE100;
+            --nav-inactive: rgba(255,255,255,0.5);
+            --input-bg: rgba(255,255,255,0.18);
+            --input-text: #fff;
+            --name-color: rgba(255,255,255,0.8);
+            --time-color: rgba(255,255,255,0.55);
+            --sep-color: rgba(255,255,255,0.6);
+            --ci-name: #fff;
+            --ci-prev: rgba(255,255,255,0.6);
+            --ci-hover: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.08);
+        }
+
+        .t-dark {
+            --bg: #1E1E2A;
+            --header: #16161F;
+            --bubble-theirs: #2A2A3A;
+            --bubble-theirs-text: #E8E8F0;
+            --nav-inactive: #555;
+            --input-bg: #2A2A3A;
+            --input-text: #E8E8F0;
+            --name-color: #888;
+            --time-color: #555;
+            --sep-color: #444;
+            --ci-prev: #555;
+            --border: rgba(255,255,255,0.05);
+        }
+
+        .t-light {
+            --bg: #F0F2F5;
+            --header: #fff;
+            --bubble-theirs: #fff;
+            --bubble-theirs-text: #1a1a1a;
+            --nav-active: #2A2000;
+            --nav-inactive: #bbb;
+            --input-bg: #E8EAF0;
+            --input-text: #1a1a1a;
+            --name-color: #aaa;
+            --time-color: #bbb;
+            --sep-color: #bbb;
+            --ci-name: #1a1a1a;
+            --ci-prev: #aaa;
+            --ci-hover: rgba(0,0,0,0.04);
+            --border: rgba(0,0,0,0.07);
+        }
+
+        .t-pink {
+            --bg: #F0D8E8;
+            --header: #DDA8C4;
+            --nav-active: #A0003A;
+            --nav-inactive: rgba(160,0,58,0.4);
+            --input-bg: rgba(255,255,255,0.45);
+            --input-text: #5A1030;
+            --name-color: rgba(90,16,48,0.65);
+            --time-color: rgba(90,16,48,0.45);
+            --sep-color: rgba(90,16,48,0.4);
+            --ci-name: #3A0820;
+            --ci-prev: rgba(90,16,48,0.55);
+            --ci-hover: rgba(160,0,58,0.06);
+            --border: rgba(160,0,58,0.1);
+        }
+
+        body {
+            background: #111827;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            max-height: 820px;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+            border-radius: 0;
+        }
+
+        /* ===== AUTH ===== */
+        .auth-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            background: var(--header);
+            overflow-y: auto;
+        }
+
+            .auth-screen.hidden {
+                display: none;
+            }
+
+        .auth-top {
+            padding: 48px 32px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .auth-logo {
+            font-size: 50px;
+            font-weight: 800;
+            color: #FAE100;
+            letter-spacing: -2px;
+        }
+
+        .auth-sub {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        .auth-title {
+            font-size: 19px;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 6px;
+        }
+
+        .auth-body {
+            padding: 0 26px 36px;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.55);
+            padding-left: 2px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            font-size: 14px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+            .auth-input:focus {
+                border-color: #FAE100;
+            }
+
+            .auth-input::placeholder {
+                color: rgba(255,255,255,0.3);
+            }
+
+            .auth-input.err {
+                border-color: #FF6B6B;
+            }
+
+        .err-msg {
+            font-size: 11px;
+            color: #FF6B6B;
+            padding-left: 2px;
+            display: none;
+        }
+
+            .err-msg.show {
+                display: block;
+            }
+
+        .phone-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .country-code {
+            width: 64px;
+            padding: 13px 8px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            font-size: 14px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            outline: none;
+            text-align: center;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            background: #FAE100;
+            color: #2A2000;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .auth-switch {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+
+            .auth-switch span {
+                color: #FAE100;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+        .or-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .or-line::before, .or-line::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: rgba(255,255,255,0.12);
+            }
+
+            .or-line span {
+                font-size: 11px;
+                color: rgba(255,255,255,0.35);
+            }
+
+        /* code screen */
+        .code-digits {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 6px 0;
+        }
+
+        .cd {
+            width: 46px;
+            height: 54px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.1);
+            color: #FAE100;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+        }
+
+            .cd:focus {
+                border-color: #FAE100;
+            }
+
+        .demo-box {
+            background: rgba(250,225,0,0.12);
+            border: 1px solid rgba(250,225,0,0.25);
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: center;
+        }
+
+            .demo-box p {
+                font-size: 11px;
+                color: rgba(255,255,255,0.45);
+                margin-bottom: 4px;
+            }
+
+            .demo-box strong {
+                font-size: 24px;
+                color: #FAE100;
+                letter-spacing: 8px;
+            }
+
+        .code-hint {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .code-to {
+            color: #FAE100;
+            font-weight: 600;
+        }
+
+        .resend {
+            color: #FAE100;
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* ===== HEADER ===== */
+        .hdr {
+            background: var(--header);
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            gap: 8px;
+            flex-shrink: 0;
+            transition: background .3s;
+        }
+
+        .hdr-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+            flex: 1;
+        }
+
+        .hdr-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.8);
+            padding: 3px;
+        }
+
+        /* ===== CHAT LIST ===== */
+        .tab-bar {
+            display: flex;
+            background: var(--header);
+            border-bottom: 0.5px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 9px 0;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--nav-inactive);
+            border-bottom: 2px solid transparent;
+            transition: color .15s;
+        }
+
+            .tab.active {
+                color: var(--nav-active);
+                border-bottom: 2px solid var(--nav-active);
+            }
+
+        .search-wrap {
+            padding: 8px 12px;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.13);
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            gap: 10px;
+            cursor: pointer;
+            border-bottom: 0.5px solid var(--border);
+            transition: background .12s;
+        }
+
+            .chat-item:hover {
+                background: var(--ci-hover);
+            }
+
+        .ava {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+            color: #fff;
+        }
+
+        .ci-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ci-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ci-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--ci-name);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ci-time {
+            font-size: 10px;
+            color: var(--nav-inactive);
+            flex-shrink: 0;
+        }
+
+        .ci-bot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3px;
+            gap: 6px;
+        }
+
+        .ci-prev {
+            font-size: 12px;
+            color: var(--ci-prev);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .badge {
+            background: #FAE100;
+            color: #7A5B00;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 2px 7px;
+            min-width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+            display: none;
+        }
+
+        /* ===== BOTTOM NAV (only in list) ===== */
+        .bottom-nav {
+            display: flex;
+            background: var(--header);
+            padding: 5px 0 12px;
+            border-top: 0.5px solid var(--border);
+            flex-shrink: 0;
+            transition: background .3s;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            font-size: 9px;
+            color: var(--nav-inactive);
+        }
+
+            .nav-item.active {
+                color: var(--nav-active);
+            }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+
+        /* ===== MESSAGES ===== */
+        .msgs-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: background .3s;
+        }
+
+        .date-sep {
+            text-align: center;
+        }
+
+            .date-sep span {
+                background: rgba(0,0,0,0.18);
+                color: var(--sep-color);
+                font-size: 10px;
+                border-radius: 12px;
+                padding: 3px 12px;
+                display: inline-block;
+            }
+
+        .join-notice {
+            text-align: center;
+        }
+
+            .join-notice span {
+                background: rgba(0,0,0,0.18);
+                color: var(--sep-color);
+                font-size: 10px;
+                border-radius: 12px;
+                padding: 3px 12px;
+                display: inline-block;
+            }
+
+        .msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+            .msg-row.mine {
+                justify-content: flex-end;
+            }
+
+        .msg-ava {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+            align-self: flex-start;
+            color: #fff;
+        }
+
+        .msg-col {
+            display: flex;
+            flex-direction: column;
+            max-width: 230px;
+        }
+
+        .msg-row.mine .msg-col {
+            align-items: flex-end;
+        }
+
+        .msg-sender {
+            font-size: 11px;
+            color: var(--name-color);
+            margin-bottom: 3px;
+        }
+
+        .bub-line {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .msg-row.mine .bub-line {
+            flex-direction: row-reverse;
+        }
+
+        .bubble {
+            padding: 9px 13px;
+            font-size: 13px;
+            line-height: 1.5;
+            border-radius: 18px;
+            word-break: break-word;
+            max-width: 210px;
+        }
+
+            .bubble.mine {
+                background: var(--bubble-mine);
+                color: var(--bubble-mine-text);
+                border-bottom-right-radius: 4px;
+            }
+
+            .bubble.theirs {
+                background: var(--bubble-theirs);
+                color: var(--bubble-theirs-text);
+                border-bottom-left-radius: 4px;
+            }
+
+        .msg-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        .msg-row.mine .msg-meta {
+            align-items: flex-end;
+        }
+
+        .unread-n {
+            font-size: 11px;
+            font-weight: 600;
+            color: #FAE100;
+            line-height: 1.2;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: var(--time-color);
+            line-height: 1.2;
+        }
+
+        .typing-ind {
+            font-size: 11px;
+            color: var(--name-color);
+            padding: 2px 10px 6px;
+            font-style: italic;
+            display: none;
+            flex-shrink: 0;
+        }
+
+        /* ===== MSG INPUT ===== */
+        .msg-input-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px 10px;
+            background: var(--header);
+            border-top: 0.5px solid var(--border);
+            flex-shrink: 0;
+            transition: background .3s;
+        }
+
+            .msg-input-row input {
+                flex: 1;
+                padding: 9px 14px;
+                border-radius: 22px;
+                border: none;
+                font-size: 13px;
+                background: var(--input-bg);
+                color: var(--input-text);
+                outline: none;
+            }
+
+                .msg-input-row input::placeholder {
+                    color: rgba(255,255,255,0.35);
+                }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 19px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.65);
+            padding: 2px;
+            flex-shrink: 0;
+        }
+
+        .send-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: #FAE100;
+            color: #7A5B00;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ===== SETTINGS PANEL ===== */
+        .settings-panel {
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 75%;
+            height: 100%;
+            background: var(--header);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            transition: right .25s ease;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+        }
+
+            .settings-panel.open {
+                right: 0;
+            }
+
+        .settings-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 49;
+            display: none;
+        }
+
+            .settings-overlay.open {
+                display: block;
+            }
+
+        .settings-hdr {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 10px;
+            border-bottom: 0.5px solid var(--border);
+        }
+
+            .settings-hdr span {
+                font-size: 15px;
+                font-weight: 500;
+                color: #fff;
+                flex: 1;
+            }
+
+        .settings-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .theme-dots {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2.5px solid transparent;
+            transition: border-color .15s;
+        }
+
+            .theme-dot.active {
+                border-color: #FAE100;
+            }
+
+        .wall-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wall-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            cursor: pointer;
+            transition: background .12s;
+        }
+
+            .wall-btn.active {
+                background: rgba(250,225,0,0.25);
+                border-color: #FAE100;
+                color: #FAE100;
+            }
+
+        .settings-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+        }
+
+        .settings-ava {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #FAE100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2A2000;
+            flex-shrink: 0;
+        }
+
+        .settings-username {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .settings-contact {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,100,100,0.3);
+            background: rgba(255,100,100,0.1);
+            color: #FF8080;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
+        /* walls */
+        .wall-clouds {
+            background: linear-gradient(180deg,#87CEEB,#B8D8EC) !important;
+        }
+
+        .wall-stars {
+            background: linear-gradient(180deg,#0A0A20,#151535) !important;
+        }
+
+        .wall-sakura {
+            background: linear-gradient(180deg,#F5DCE8,#EAC8DC) !important;
+        }
+
+        .wall-plain {
+            background: #DCDCE8 !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+
+        <!-- REGISTER -->
+        <div class="auth-screen" id="sc-reg">
+            <div class="auth-top">
+                <div class="auth-logo">Haru</div>
+                <div class="auth-sub">하루 · Каждый день на связи</div>
+                <div class="auth-title">Создать аккаунт</div>
+            </div>
+            <div class="auth-body">
+                <div class="input-group">
+                    <div class="input-label">Имя пользователя</div>
+                    <input class="auth-input" id="r-name" placeholder="Твоё имя" maxlength="20">
+                    <div class="err-msg" id="e-name">Минимум 2 символа</div>
+                </div>
+                <div class="input-group">
+                    <div class="input-label">Email</div>
+                    <input class="auth-input" id="r-email" type="email" placeholder="example@mail.ru">
+                    <div class="err-msg" id="e-email">Введи корректный email</div>
+                </div>
+                <div class="or-line"><span>или</span></div>
+                <div class="input-group">
+                    <div class="input-label">Номер телефона</div>
+                    <div class="phone-row">
+                        <input class="auth-input country-code" id="r-cc" value="+7" maxlength="4">
+                        <input class="auth-input" style="flex:1" id="r-phone" placeholder="900 000 00 00" type="tel" maxlength="12">
+                    </div>
+                    <div class="err-msg" id="e-phone">Введи корректный номер</div>
+                </div>
+                <div class="input-group">
+                    <div class="input-label">Пароль</div>
+                    <input class="auth-input" id="r-pass" type="password" placeholder="Минимум 6 символов">
+                    <div class="err-msg" id="e-pass">Минимум 6 символов</div>
+                </div>
+                <div class="input-group">
+                    <div class="input-label">Подтвердить пароль</div>
+                    <input class="auth-input" id="r-pass2" type="password" placeholder="Повтори пароль" onkeydown="if(event.key==='Enter')doRegister()">
+                    <div class="err-msg" id="e-pass2">Пароли не совпадают</div>
+                </div>
+                <button class="auth-btn" onclick="doRegister()">Зарегистрироваться</button>
+                <div class="auth-switch">Уже есть аккаунт? <span onclick="showSc('sc-login')">Войти</span></div>
+            </div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="auth-screen hidden" id="sc-login">
+            <div class="auth-top">
+                <div class="auth-logo">Haru</div>
+                <div class="auth-sub">하루 · Каждый день на связи</div>
+                <div class="auth-title">Добро пожаловать!</div>
+            </div>
+            <div class="auth-body">
+                <div class="input-group">
+                    <div class="input-label">Email или номер телефона</div>
+                    <input class="auth-input" id="l-id" placeholder="example@mail.ru или +7...">
+                    <div class="err-msg" id="e-lid">Аккаунт не найден</div>
+                </div>
+                <div class="input-group">
+                    <div class="input-label">Пароль</div>
+                    <input class="auth-input" id="l-pass" type="password" placeholder="Твой пароль" onkeydown="if(event.key==='Enter')doLogin()">
+                    <div class="err-msg" id="e-lpass">Неверный пароль</div>
+                </div>
+                <button class="auth-btn" onclick="doLogin()">Войти в Haru</button>
+                <div class="auth-switch">Нет аккаунта? <span onclick="showSc('sc-reg')">Зарегистрироваться</span></div>
+            </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="auth-screen hidden" id="sc-code">
+            <div class="auth-top">
+                <div class="auth-logo">Haru</div>
+                <div class="auth-sub">하루 · Подтверждение</div>
+                <div class="auth-title">Введи код</div>
+            </div>
+            <div class="auth-body">
+                <div class="code-hint">Код отправлен на <span class="code-to" id="code-to">—</span></div>
+                <div class="code-digits">
+                    <input class="cd" id="d1" maxlength="1" oninput="nd(this,'d2')" onkeydown="pd(event,this,'')">
+                    <input class="cd" id="d2" maxlength="1" oninput="nd(this,'d3')" onkeydown="pd(event,this,'d1')">
+                    <input class="cd" id="d3" maxlength="1" oninput="nd(this,'d4')" onkeydown="pd(event,this,'d2')">
+                    <input class="cd" id="d4" maxlength="1" oninput="nd(this,'d5')" onkeydown="pd(event,this,'d3')">
+                    <input class="cd" id="d5" maxlength="1" oninput="nd(this,'d6')" onkeydown="pd(event,this,'d4')">
+                    <input class="cd" id="d6" maxlength="1" oninput="verifyCode()" onkeydown="pd(event,this,'d5')">
+                </div>
+                <div class="demo-box">
+                    <p>🔒 Демо-код (в реальном приложении придёт смс):</p>
+                    <strong id="demo-code">——————</strong>
+                </div>
+                <div class="err-msg show" id="e-code" style="display:none;text-align:center;color:#FF6B6B">Неверный код</div>
+                <button class="auth-btn" onclick="verifyCode()">Подтвердить</button>
+                <div class="auth-switch">Не получил? <button class="resend" onclick="resend()">Отправить снова</button></div>
+                <div class="auth-switch" style="margin-top:4px"><span onclick="showSc('sc-reg')">← Назад</span></div>
+            </div>
+        </div>
+
+        <!-- MAIN APP -->
+        <!-- Header -->
+        <div class="hdr" id="main-hdr" style="display:none">
+            <button class="hdr-btn" id="back-btn" onclick="goBack()" style="display:none;font-size:22px">←</button>
+            <span class="hdr-title" id="hdr-title">채팅 · Haru</span>
+            <button class="hdr-btn" onclick="openSettings()">☰</button>
+        </div>
+
+        <!-- Chat list -->
+        <div id="sc-list" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+            <div class="tab-bar">
+                <div class="tab active">💬 Чаты</div>
+                <div class="tab">👥 Группы</div>
+                <div class="tab"># Открытые</div>
+            </div>
+            <div class="search-wrap">
+                <div class="search-bar">🔍 <span style="color:rgba(255,255,255,0.4);font-size:12px">Поиск</span></div>
+            </div>
+            <div class="chat-list">
+                <div class="chat-item" onclick="openRoom('general','Общий чат 💬')">
+                    <div class="ava" style="background:#6A8FAA;font-size:20px">💬</div>
+                    <div class="ci-body">
+                        <div class="ci-top"><span class="ci-name">Общий чат</span><span class="ci-time" id="pt-general">—</span></div>
+                        <div class="ci-bot"><span class="ci-prev" id="pp-general">Добро пожаловать в Haru 🌸</span><span class="badge" id="pb-general">0</span></div>
+                    </div>
+                </div>
+                <div class="chat-item" onclick="openRoom('random','랜덤 채팅 🎲')">
+                    <div class="ava" style="background:#7AAA8A;font-size:20px">🎲</div>
+                    <div class="ci-body">
+                        <div class="ci-top"><span class="ci-name">랜덤 채팅</span><span class="ci-time" id="pt-random">—</span></div>
+                        <div class="ci-bot"><span class="ci-prev" id="pp-random">Случайные разговоры</span><span class="badge" id="pb-random">0</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-nav">
+                <div class="nav-item active"><div class="nav-icon">💬</div><span>채팅</span></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><span>친구</span></div>
+                <div class="nav-item"><div class="nav-icon">#</div><span>오픈채팅</span></div>
+                <div class="nav-item"><div class="nav-icon">⋯</div><span>더보기</span></div>
+            </div>
+        </div>
+
+        <!-- Chat screen (NO bottom nav) -->
+        <div id="sc-chat" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+            <div class="msgs-wrap" id="msgs"></div>
+            <div class="typing-ind" id="typing-ind"></div>
+            <div class="msg-input-row">
+                <button class="icon-btn">+</button>
+                <input type="text" id="msg-in" placeholder="메시지 입력..." onkeydown="handleKey(event)" oninput="sendTyping()">
+                <button class="icon-btn">😊</button>
+                <button class="icon-btn">🎤</button>
+                <button class="send-btn" onclick="sendMsg()">➤</button>
+            </div>
+        </div>
+
+        <!-- Settings panel -->
+        <div class="settings-overlay" id="s-overlay" onclick="closeSettings()"></div>
+        <div class="settings-panel" id="s-panel">
+            <div class="settings-hdr">
+                <button class="hdr-btn" onclick="closeSettings()">✕</button>
+                <span>Настройки</span>
+            </div>
+            <div class="settings-body">
+                <div class="settings-user">
+                    <div class="settings-ava" id="s-ava">—</div>
+                    <div>
+                        <div class="settings-username" id="s-uname">—</div>
+                        <div class="settings-contact" id="s-contact">—</div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-label">Тема оформления</div>
+                    <div class="theme-dots">
+                        <div class="theme-dot active" style="background:#7A8FA8" onclick="setTheme('')" id="td-b" title="Синяя"></div>
+                        <div class="theme-dot" style="background:#1E1E2A" onclick="setTheme('t-dark')" id="td-d" title="Тёмная"></div>
+                        <div class="theme-dot" style="background:#F0F2F5;border:1px solid #ccc" onclick="setTheme('t-light')" id="td-l" title="Светлая"></div>
+                        <div class="theme-dot" style="background:#DDA8C4" onclick="setTheme('t-pink')" id="td-p" title="Розовая"></div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-label">Обои чата</div>
+                    <div class="wall-btns">
+                        <button class="wall-btn active" onclick="setWall('')" id="wb-0">По умолчанию</button>
+                        <button class="wall-btn" onclick="setWall('wall-clouds')" id="wb-1">☁️ Облака</button>
+                        <button class="wall-btn" onclick="setWall('wall-stars')" id="wb-2">✨ Звёзды</button>
+                        <button class="wall-btn" onclick="setWall('wall-sakura')" id="wb-3">🌸 Сакура</button>
+                        <button class="wall-btn" onclick="setWall('wall-plain')" id="wb-4">⬜ Простые</button>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="doLogout()">🚪 Выйти из аккаунта</button>
+            </div>
+        </div>
+
+    </div><!-- .app -->
+
+    <script>
+        // ---- DB ----
+        const DB = JSON.parse(localStorage.getItem('haru_db') || '{}');
+        function saveDB() { localStorage.setItem('haru_db', JSON.stringify(DB)); }
+        let me = JSON.parse(localStorage.getItem('haru_me') || 'null');
+        let pending = null, vCode = null;
+
+        // ---- SCREENS ----
+        function showSc(id) {
+            ['sc-reg', 'sc-login', 'sc-code'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function showErr(id, msg) { const e = document.getElementById(id); if (e) { e.textContent = msg || e.textContent; e.classList.add('show'); e.style.display = 'block'; } }
+        function clearErrs(...ids) { ids.forEach(id => { const e = document.getElementById(id); if (e) { e.classList.remove('show'); e.style.display = 'none'; } }); }
+        function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+        function validPhone(v) { return /^\d{7,12}$/.test(v.replace(/\s/g, '')); }
+        function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+
+        // ---- REGISTER ----
+        function doRegister() {
+            const name = document.getElementById('r-name').value.trim();
+            const email = document.getElementById('r-email').value.trim();
+            const phone = document.getElementById('r-phone').value.trim();
+            const cc = document.getElementById('r-cc').value.trim();
+            const pass = document.getElementById('r-pass').value;
+            const pass2 = document.getElementById('r-pass2').value;
+            clearErrs('e-name', 'e-email', 'e-phone', 'e-pass', 'e-pass2');
+            let ok = true;
+            if (name.length < 2) { showErr('e-name', 'Минимум 2 символа'); ok = false; }
+            if (!email && !phone) { showErr('e-email', 'Нужен email или телефон'); showErr('e-phone', 'Нужен email или телефон'); ok = false; }
+            if (email && !validEmail(email)) { showErr('e-email', 'Неверный формат email'); ok = false; }
+            if (phone && !validPhone(phone)) { showErr('e-phone', 'Неверный формат номера'); ok = false; }
+            if (pass.length < 6) { showErr('e-pass', 'Минимум 6 символов'); ok = false; }
+            if (pass !== pass2) { showErr('e-pass2', 'Пароли не совпадают'); ok = false; }
+            if (!ok) return;
+            const contact = phone ? cc + phone.replace(/\s/g, '') : email;
+            if (DB[contact]) { showErr('e-email', 'Аккаунт уже существует'); return; }
+            pending = { name, email, phone: phone ? cc + phone.replace(/\s/g, '') : '', pass, contact };
+            vCode = genCode();
+            document.getElementById('demo-code').textContent = vCode;
+            document.getElementById('code-to').textContent = phone ? (cc + ' ' + phone) : email;
+            ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('e-code').style.display = 'none';
+            showSc('sc-code');
+            setTimeout(() => document.getElementById('d1').focus(), 100);
+        }
+        function nd(el, nid) { if (el.value && nid) document.getElementById(nid)?.focus(); }
+        function pd(e, el, pid) { if (e.key === 'Backspace' && !el.value && pid) document.getElementById(pid)?.focus(); }
+        function resend() {
+            vCode = genCode();
+            document.getElementById('demo-code').textContent = vCode;
+            ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('e-code').style.display = 'none';
+            document.getElementById('d1').focus();
+        }
+        function verifyCode() {
+            const entered = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].map(id => document.getElementById(id).value).join('');
+            if (entered.length < 6) return;
+            if (entered === vCode) {
+                DB[pending.contact] = { name: pending.name, pass: pending.pass, email: pending.email, phone: pending.phone };
+                saveDB();
+                me = { name: pending.name, contact: pending.contact };
+                localStorage.setItem('haru_me', JSON.stringify(me));
+                enterApp();
+            } else {
+                document.getElementById('e-code').style.display = 'block';
+                ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('d1').focus();
+            }
+        }
+
+        // ---- LOGIN ----
+        function doLogin() {
+            const id = document.getElementById('l-id').value.trim();
+            const pass = document.getElementById('l-pass').value;
+            clearErrs('e-lid', 'e-lpass');
+            if (!id) { showErr('e-lid', 'Введи email или телефон'); return; }
+            if (!pass) { showErr('e-lpass', 'Введи пароль'); return; }
+            const user = DB[id];
+            if (!user) { showErr('e-lid', 'Аккаунт не найден'); return; }
+            if (user.pass !== pass) { showErr('e-lpass', 'Неверный пароль'); return; }
+            me = { name: user.name, contact: id };
+            localStorage.setItem('haru_me', JSON.stringify(me));
+            enterApp();
+        }
+        function doLogout() {
+            me = null; localStorage.removeItem('haru_me');
+            location.reload();
+        }
+
+        // ---- ENTER APP ----
+        function enterApp() {
+            ['sc-reg', 'sc-login', 'sc-code'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById('main-hdr').style.display = 'flex';
+            const list = document.getElementById('sc-list');
+            list.style.display = 'flex';
+            // update settings panel
+            if (me) {
+                document.getElementById('s-ava').textContent = me.name.slice(0, 2).toUpperCase();
+                document.getElementById('s-uname').textContent = me.name;
+                document.getElementById('s-contact').textContent = me.contact;
+            }
+            initSocket();
+        }
+        if (me) enterApp();
+
+        // ---- SETTINGS ----
+        function openSettings() {
+            document.getElementById('s-panel').classList.add('open');
+            document.getElementById('s-overlay').classList.add('open');
+        }
+        function closeSettings() {
+            document.getElementById('s-panel').classList.remove('open');
+            document.getElementById('s-overlay').classList.remove('open');
+        }
+        let curTheme = '', curWall = '';
+        function setTheme(t) {
+            curTheme = t;
+            document.getElementById('app').className = 'app ' + (t || '');
+            ['td-b', 'td-d', 'td-l', 'td-p'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+            const map = { '': 'td-b', 't-dark': 'td-d', 't-light': 'td-l', 't-pink': 'td-p' };
+            document.getElementById(map[t] || 'td-b')?.classList.add('active');
+        }
+        function setWall(w) {
+            curWall = w;
+            document.getElementById('msgs').className = 'msgs-wrap ' + (w || '');
+            ['wb-0', 'wb-1', 'wb-2', 'wb-3', 'wb-4'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+            const map = { '': 'wb-0', 'wall-clouds': 'wb-1', 'wall-stars': 'wb-2', 'wall-sakura': 'wb-3', 'wall-plain': 'wb-4' };
+            document.getElementById(map[w] || 'wb-0')?.classList.add('active');
+        }
+
+        // ---- SOCKET ----
+        let socket, myId = '', curRoom = null, unread = { general: 0, random: 0 }, typTimer;
+        const aColors = ['#C8A8D8', '#A8C8A8', '#D8C8A8', '#A8B8D8', '#C8D4A8', '#D4A8C8', '#A8D8C8'];
+        function avaColor(n) { let h = 0; for (let c of n) h += c.charCodeAt(0); return aColors[h % aColors.length]; }
+        function initials(n) { return n.slice(0, 2).toUpperCase(); }
+
+        function initSocket() {
+            socket = io('http://localhost:3000');
+            socket.on('connect', () => { socket.emit('register', { username: me.name }); });
+            socket.on('registered', ({ id }) => {
+                myId = id;
+                socket.emit('join_room', 'general');
+                socket.emit('join_room', 'random');
+            });
+            socket.on('message_history', (msgs) => { document.getElementById('msgs').innerHTML = ''; msgs.forEach(m => addMsg(m, curRoom)); });
+            socket.on('new_message', ({ roomId, msg }) => addMsg(msg, roomId));
+            socket.on('message_read', ({ msgId, unread: u }) => { const el = document.getElementById('un-' + msgId); if (el) { if (u <= 0) el.remove(); else el.textContent = u; } });
+            socket.on('user_typing', ({ username }) => {
+                const ind = document.getElementById('typing-ind');
+                ind.textContent = username + ' печатает...'; ind.style.display = 'block';
+                clearTimeout(typTimer); typTimer = setTimeout(() => ind.style.display = 'none', 2000);
+            });
+        }
+
+        function openRoom(roomId, name) {
+            curRoom = roomId;
+            document.getElementById('sc-list').style.display = 'none';
+            document.getElementById('sc-chat').style.display = 'flex';
+            document.getElementById('hdr-title').textContent = name;
+            document.getElementById('back-btn').style.display = 'block';
+            document.getElementById('msgs').innerHTML = '';
+            unread[roomId] = 0; updateBadge(roomId);
+            if (socket) socket.emit('join_room', roomId);
+            setTimeout(() => document.getElementById('msg-in').focus(), 100);
+        }
+        function goBack() {
+            curRoom = null;
+            document.getElementById('sc-chat').style.display = 'none';
+            document.getElementById('sc-list').style.display = 'flex';
+            document.getElementById('hdr-title').textContent = '채팅 · Haru';
+            document.getElementById('back-btn').style.display = 'none';
+        }
+
+        function addMsg(msg, roomId) {
+            if (roomId !== curRoom) {
+                unread[roomId] = (unread[roomId] || 0) + 1;
+                updateBadge(roomId); updatePreview(roomId, msg); return;
+            }
+            updatePreview(roomId, msg);
+            const isMine = msg.fromId === myId;
+            const wrap = document.getElementById('msgs');
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (isMine ? 'mine' : 'theirs');
+
+            if (!isMine) {
+                const av = document.createElement('div');
+                av.className = 'msg-ava';
+                av.style.background = avaColor(msg.from);
+                av.textContent = initials(msg.from);
+                row.appendChild(av);
+            }
+
+            const col = document.createElement('div'); col.className = 'msg-col';
+            if (!isMine) { const s = document.createElement('div'); s.className = 'msg-sender'; s.textContent = msg.from; col.appendChild(s); }
+
+            const bl = document.createElement('div'); bl.className = 'bub-line';
+            const bub = document.createElement('div');
+            bub.className = 'bubble ' + (isMine ? 'mine' : 'theirs');
+            bub.textContent = msg.text;
+            bl.appendChild(bub);
+
+            const meta = document.createElement('div'); meta.className = 'msg-meta';
+            if (msg.unread > 0) { const u = document.createElement('div'); u.className = 'unread-n'; u.id = 'un-' + msg.id; u.textContent = msg.unread; meta.appendChild(u); }
+            const t = document.createElement('div'); t.className = 'msg-time'; t.textContent = msg.time; meta.appendChild(t);
+            bl.appendChild(meta);
+
+            col.appendChild(bl); row.appendChild(col); wrap.appendChild(row);
+            wrap.scrollTop = wrap.scrollHeight;
+            if (socket) socket.emit('read_message', { roomId: curRoom, msgId: msg.id });
+        }
+        function updatePreview(rid, msg) {
+            const p = document.getElementById('pp-' + rid); const t = document.getElementById('pt-' + rid);
+            if (p) p.textContent = msg.from + ': ' + msg.text;
+            if (t) t.textContent = msg.time;
+        }
+        function updateBadge(rid) {
+            const b = document.getElementById('pb-' + rid); if (!b) return;
+            const n = unread[rid] || 0;
+            b.style.display = n > 0 ? 'inline-block' : 'none'; b.textContent = n;
+        }
+        function sendMsg() {
+            const inp = document.getElementById('msg-in');
+            const txt = inp.value.trim();
+            if (!txt || !curRoom || !socket) return;
+            socket.emit('send_message', { roomId: curRoom, text: txt });
+            inp.value = '';
+        }
+        function handleKey(e) { if (e.key === 'Enter') sendMsg(); }
+        function sendTyping() { if (curRoom && socket) socket.emit('typing', { roomId: curRoom }); }
+    </script>
+</body>
+</html>
